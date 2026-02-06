@@ -1,0 +1,7 @@
+# requirements.txt
+sentence-transformers
+faiss-cpu
+beautifulsoup4
+nltk
+google-generativeai
+python-dotenv
