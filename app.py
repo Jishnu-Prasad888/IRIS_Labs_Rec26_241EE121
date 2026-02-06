@@ -11,7 +11,6 @@ load_dotenv()
 # Page config
 st.set_page_config(
     page_title="Odyssey Hierarchical RAG",
-    page_icon="📚",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -28,7 +27,7 @@ if "show_hierarchy" not in st.session_state:
 
 # Sidebar
 with st.sidebar:
-    st.title("📚 Odyssey Hierarchical RAG")
+    st.title("Odyssey Hierarchical RAG")
     st.markdown("""
     **Features:**
     - Semantic chunking (not fixed-length)
@@ -40,7 +39,7 @@ with st.sidebar:
     st.divider()
     
     # API Configuration
-    st.subheader("🔑 API Configuration")
+    st.subheader("API Configuration")
     api_key = os.getenv("GOOGLE_API_KEY")
     
     if api_key:
@@ -52,7 +51,7 @@ with st.sidebar:
     st.divider()
     
     # File paths
-    st.subheader("📂 Data Configuration")
+    st.subheader("Data Configuration")
     html_path = st.text_input("HTML file path", "data/raw/odyssey.html")
     
     # Check if file exists
@@ -66,7 +65,7 @@ with st.sidebar:
     st.divider()
     
     # Retrieval settings
-    st.subheader("⚙️ Retrieval Settings")
+    st.subheader("Retrieval Settings")
     k_chunks = st.slider("Max chunks to retrieve", 1, 10, 5, 
                          help="How many chunks to retrieve for context")
     similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.25, 0.05,
@@ -82,7 +81,7 @@ with st.sidebar:
     st.divider()
     
     # Initialize button
-    st.subheader("🚀 System Control")
+    st.subheader("System Control")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -93,7 +92,7 @@ with st.sidebar:
                         html_path=html_path
                     )
                     st.session_state.system_ready = True
-                    st.success("✅ System ready!")
+                    st.success("System ready!")
                     
                     # Show stats
                     pipeline = st.session_state.pipeline
@@ -115,7 +114,7 @@ with st.sidebar:
     
     # Hierarchy visualization
     st.divider()
-    st.subheader("📊 Hierarchy Info")
+    st.subheader("Hierarchy Info")
     
     if st.button("Show Document Structure"):
         st.session_state.show_hierarchy = not st.session_state.show_hierarchy
@@ -141,7 +140,7 @@ with st.sidebar:
                     st.caption(f"Level {level} nodes: {count}")
 
 # Main interface
-st.title("🏛️ The Odyssey - Hierarchical RAG")
+st.title("The Odyssey - Hierarchical RAG")
 st.markdown("""
 Ask questions about Homer's Odyssey with intelligent, structure-aware retrieval.
 The system understands book structure, characters, and narrative elements.
@@ -151,20 +150,20 @@ The system understands book structure, characters, and narrative elements.
 col1, col2, col3, col4 = st.columns(4)
 with col1:
     if api_key:
-        st.success("🔑 API: Ready")
+        st.success("API: Ready")
     else:
-        st.error("🔑 API: Missing")
+        st.error("API: Missing")
 with col2:
     if st.session_state.system_ready:
         pipeline = st.session_state.pipeline
-        st.success(f"🤖 System: Ready ({len(pipeline.chunks)} chunks)")
+        st.success(f"System: Ready ({len(pipeline.chunks)} chunks)")
     else:
-        st.warning("🤖 System: Not ready")
+        st.warning("System: Not ready")
 with col3:
     if st.session_state.system_ready:
-        st.info("📚 Source: Odyssey HTML")
+        st.info("Source: Odyssey HTML")
 with col4:
-    st.caption(f"💬 Messages: {len(st.session_state.messages)}")
+    st.caption(f" Messages: {len(st.session_state.messages)}")
 
 st.divider()
 
@@ -180,7 +179,7 @@ with chat_container:
             # Show metadata for assistant messages
             if message["role"] == "assistant" and "metadata" in message:
                 metadata = message["metadata"]
-                with st.expander("📊 Retrieval Details"):
+                with st.expander("Retrieval Details"):
                     cols = st.columns(4)
                     with cols[0]:
                         st.metric("Strategy", metadata.get("strategy", "N/A"))
@@ -227,7 +226,7 @@ if prompt := st.chat_input("Ask about The Odyssey...",
          metadata = {}
          st.markdown(response)
      else:
-         with st.spinner("🔍 Retrieving with hierarchy-aware search..."):
+         with st.spinner("Retrieving with hierarchy-aware search..."):
              try:
                  pipeline = st.session_state.pipeline
 
@@ -316,35 +315,23 @@ if prompt := st.chat_input("Ask about The Odyssey...",
 st.divider()
 footer_cols = st.columns(4)
 with footer_cols[0]:
-    if st.button("🔄 Reset System"):
+    if st.button("Reset System"):
         st.session_state.pipeline = None
         st.session_state.system_ready = False
         st.session_state.messages = []
         st.rerun()
 with footer_cols[1]:
     if st.session_state.pipeline:
-        st.caption(f"📊 {len(st.session_state.pipeline.chunks)} semantic chunks")
+        st.caption(f" {len(st.session_state.pipeline.chunks)} semantic chunks")
 with footer_cols[2]:
-    st.caption("🎯 Adaptive hierarchical retrieval")
+    st.caption("Adaptive hierarchical retrieval")
 with footer_cols[3]:
-    st.caption("🏛️ Homer's Odyssey")
+    st.caption(" Homer's Odyssey")
 
 # Example questions
 st.divider()
-st.subheader("💡 Example Questions")
+st.subheader("Example Questions")
 
-examples = st.columns(3)
-with examples[0]:
-    if st.button("Who is Odysseus?"):
-        st.session_state.messages.append({"role": "user", "content": "Who is Odysseus?"})
-        st.rerun()
-with examples[1]:
-    if st.button("What happens in Book 9?"):
-        st.session_state.messages.append({"role": "user", "content": "What happens in Book 9?"})
-        st.rerun()
-with examples[2]:
-    if st.button("Describe the character of Penelope"):
-        st.session_state.messages.append({"role": "user", "content": "Describe the character of Penelope"})
-        st.rerun()
+
 
 st.caption("Try: 'Tell me about the Cyclops', 'What is the role of Athena?', 'Summary of Book 1'")
