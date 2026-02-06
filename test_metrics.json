@@ -1,0 +1,59 @@
+{
+  "odyssey_html": {
+    "exists": true,
+    "file_size_kb": 757.748046875
+  },
+  "api_key_present": true,
+  "gemini_init_success": true,
+  "data_processing": {
+    "paragraph_count": 0,
+    "chunk_count": 0,
+    "sample_chunk_word_count": 0
+  },
+  "embeddings": {
+    "num_embeddings": 1184,
+    "embedding_shape": 384,
+    "time_sec": 35.36700201034546
+  },
+  "rag_pipeline": {
+    "questions": [
+      {
+        "question": "Who is the main character of the Odyssey?",
+        "response_time_sec": 0.9325611591339111,
+        "sources_count": 0,
+        "top_similarity": 0
+      },
+      {
+        "question": "What is Penelope doing while Odysseus is away?",
+        "response_time_sec": 1.4413928985595703,
+        "sources_count": 0,
+        "top_similarity": 0
+      },
+      {
+        "question": "Who is Telemachus?",
+        "response_time_sec": 1.4450311660766602,
+        "sources_count": 0,
+        "top_similarity": 0
+      },
+      {
+        "question": "What is Odysseus trying to do throughout the story?",
+        "response_time_sec": 1.753053903579712,
+        "sources_count": 0,
+        "top_similarity": 0
+      },
+      {
+        "question": "How many years does Odysseus wander?",
+        "response_time_sec": 0.7995171546936035,
+        "sources_count": 0,
+        "top_similarity": 0
+      }
+    ],
+    "avg_response_time_sec": 1.2743112564086914,
+    "avg_sources": 0.0,
+    "avg_top_similarity": 0.0
+  },
+  "final_summary": {
+    "total_tests": 5,
+    "passed_tests": 4
+  }
+}
