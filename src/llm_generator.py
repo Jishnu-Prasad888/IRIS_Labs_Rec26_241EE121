@@ -5,9 +5,7 @@ from dotenv import load_dotenv
 from google.generativeai.client import configure
 from google.generativeai.generative_models import GenerativeModel
 
-# Load environment variables once
 load_dotenv()
-
 
 class GeminiGenerator:
     """
@@ -23,10 +21,6 @@ class GeminiGenerator:
 
         self.model_name = model_name
         self.model = GenerativeModel(model_name)
-
-    # -------------------------
-    # Core generation
-    # -------------------------
 
     def generate(
         self,
@@ -54,12 +48,8 @@ class GeminiGenerator:
             return text.strip()
 
         except Exception as e:
-            # Never crash the app due to model failure
             return f"Generation error: {e}"
 
-    # -------------------------
-    # RAG helpers
-    # -------------------------
 
     def format_context(self, retrieved_chunks: List[Dict]) -> str:
         """

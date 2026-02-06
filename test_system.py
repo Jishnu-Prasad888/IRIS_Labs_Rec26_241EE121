@@ -36,7 +36,7 @@ class OdysseyRAGTester:
     def save_metrics(self):
         with open(self.metrics_file, 'w', encoding='utf-8') as f:
             json.dump(self.metrics, f, indent=2, ensure_ascii=False)
-        print(f"\n✅ Metrics saved to {self.metrics_file}")
+        print(f"\nMetrics saved to {self.metrics_file}")
 
     def setup_directories(self):
         os.makedirs("data/raw", exist_ok=True)

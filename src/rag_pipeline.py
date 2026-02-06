@@ -1,5 +1,3 @@
-# src/rag_pipeline.py
-
 from typing import Dict
 import logging
 
@@ -15,9 +13,7 @@ class RAGPipeline:
     Intent-aware Retrieval-Augmented Generation pipeline for Homer's Odyssey.
     """
 
-    # -------------------------
-    # Static knowledge
-    # -------------------------
+
 
     ODYSSEY_CHARACTERS = {
         "odysseus",
@@ -37,9 +33,7 @@ class RAGPipeline:
         "overview",
     }
 
-    # -------------------------
-    # Initialization
-    # -------------------------
+
 
     def __init__(self, chunks_path: str, embeddings_path: str):
         self.retriever = EmbeddingRetriever()
@@ -47,9 +41,6 @@ class RAGPipeline:
 
         self.retriever.load_index(embeddings_path, chunks_path)
 
-    # -------------------------
-    # Intent detection
-    # -------------------------
 
     @classmethod
     def is_character_question(cls, question: str) -> bool:
@@ -66,9 +57,6 @@ class RAGPipeline:
         q = question.lower().strip()
         return "odyssey" in q and len(q.split()) <= 5
 
-    # -------------------------
-    # Main pipeline
-    # -------------------------
 
     def answer_question(
         self,
@@ -80,7 +68,6 @@ class RAGPipeline:
         Answer a question using intent-aware routing.
         """
 
-        # -------- Overview / character routing (NO RAG) --------
         if (
             self.is_overview_question(question)
             or self.is_character_question(question)
@@ -95,7 +82,6 @@ class RAGPipeline:
                 "sources": [],
             }
 
-        # -------- RAG path --------
         retrieved_chunks, similarities = self.retriever.retrieve(
             question, k=k, threshold=threshold
         )

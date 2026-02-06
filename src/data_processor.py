@@ -19,10 +19,6 @@ class OdysseyDataProcessor:
     def __init__(self, html_path: str):
         self.html_path = html_path
 
-    # -------------------------
-    # Extraction
-    # -------------------------
-
     def extract_text_from_html(self) -> List[Dict]:
         with open(self.html_path, "r", encoding="utf-8") as f:
             soup = BeautifulSoup(f, "html.parser")
@@ -62,9 +58,6 @@ class OdysseyDataProcessor:
 
         return paragraphs
 
-    # -------------------------
-    # Chunking
-    # -------------------------
 
     def create_chunks(
         self,
@@ -123,9 +116,6 @@ class OdysseyDataProcessor:
 
         return chunks
 
-    # -------------------------
-    # Pipeline
-    # -------------------------
 
     def process_and_save(self, output_path: str) -> List[Dict]:
         paragraphs = self.extract_text_from_html()

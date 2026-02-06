@@ -14,12 +14,7 @@ class EmbeddingRetriever:
         self.index: Optional[faiss.IndexFlatIP] = None
         self.chunks: List[Dict] = []
 
-        # Explicit cast fixes Pylance
         self.dimension = int(self.model.get_sentence_embedding_dimension())
-
-    # -------------------------
-    # FAISS helpers (Pylance-safe)
-    # -------------------------
 
     @staticmethod
     def _normalize(x: np.ndarray) -> None:
@@ -29,9 +24,6 @@ class EmbeddingRetriever:
     def _search(index: faiss.IndexFlatIP, x: np.ndarray, k: int):
         return index.search(x, k)
 
-    # -------------------------
-    # Index creation
-    # -------------------------
 
     def create_embeddings(self, chunks: List[Dict]) -> np.ndarray:
         self.chunks = chunks
@@ -62,9 +54,6 @@ class EmbeddingRetriever:
         with open(chunks_path, "r", encoding="utf-8") as f:
             self.chunks = json.load(f)
 
-    # -------------------------
-    # Retrieval
-    # -------------------------
 
     def retrieve(
         self,

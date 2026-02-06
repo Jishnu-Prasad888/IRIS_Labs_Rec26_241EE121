@@ -1,4 +1,3 @@
-# app.py
 import streamlit as st
 import json
 import os
@@ -7,20 +6,15 @@ from src.data_processor import OdysseyDataProcessor
 from src.embedding_retriever import EmbeddingRetriever
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
-# Check for API key
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
-# Page config
 st.set_page_config(
     page_title="Odyssey RAG Chatbot",
-    page_icon="🏛️",
     layout="wide"
 )
 
-# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "pipeline" not in st.session_state:
@@ -28,9 +22,8 @@ if "pipeline" not in st.session_state:
 if "system_ready" not in st.session_state:
     st.session_state.system_ready = False
 
-# Sidebar
 with st.sidebar:
-    st.title("🏛️ Odyssey RAG Chatbot")
+    st.title("Odyssey RAG Chatbot")
     st.markdown("""
     **About this chatbot:**
     - Answers questions about Homer's Odyssey
@@ -39,14 +32,13 @@ with st.sidebar:
     - Online operation with Google AI API
     """)
     
-    # API Key status
     st.divider()
     st.subheader("API Configuration")
     
     if GOOGLE_API_KEY:
-        st.success("✅ Google API Key loaded")
+        st.success("Google API Key loaded")
     else:
-        st.error("❌ Google API Key not found")
+        st.error("Google API Key not found")
         st.info("Add GOOGLE_API_KEY to your .env file")
     
     st.divider()
@@ -89,7 +81,7 @@ with st.sidebar:
                     try:
                         processor = OdysseyDataProcessor(html_path)
                         chunks = processor.process_and_save(chunks_path)
-                        st.success(f"✓ Extracted {len(chunks)} chunks")
+                        st.success(f"Extracted {len(chunks)} chunks")
                     except Exception as e:
                         st.error(f"Error processing HTML: {e}")
                         st.stop()
@@ -106,7 +98,7 @@ with st.sidebar:
                     retriever = EmbeddingRetriever()
                     embeddings = retriever.create_embeddings(chunks_data)
                     retriever.save_index(embeddings_path, chunks_path)
-                    st.success(f"✓ Created embeddings for {len(chunks_data)} chunks")
+                    st.success(f"Created embeddings for {len(chunks_data)} chunks")
                 except Exception as e:
                     st.error(f"Error creating embeddings: {e}")
                     st.stop()
@@ -119,7 +111,7 @@ with st.sidebar:
                     embeddings_path
                 )
                 st.session_state.system_ready = True
-                st.success("✅ System ready!")
+                st.success("System ready !!!")
             except Exception as e:
                 st.error(f"Error initializing pipeline: {e}")
                 st.session_state.system_ready = False
@@ -134,15 +126,15 @@ st.markdown("Ask questions about Homer's Odyssey using Gemini 2.5 Flash")
 col1, col2 = st.columns(2)
 with col1:
     if GOOGLE_API_KEY:
-        st.success("✅ API Key: Configured")
+        st.success("API Key: Configured")
     else:
-        st.error("❌ API Key: Missing")
+        st.error("API Key: Missing")
 
 with col2:
     if st.session_state.system_ready:
-        st.success("✅ RAG System: Ready")
+        st.success("RAG System: Ready")
     else:
-        st.warning("⚠️ RAG System: Not initialized")
+        st.warning("RAG System: Not initialized")
 
 # Chat container
 chat_container = st.container()
@@ -231,4 +223,4 @@ with col2:
     st.caption(f"Messages in chat: {len(st.session_state.messages)}")
 
 with col3:
-    st.caption("Powered by Gemini 2.5 Flash")
+    st.caption(" Gemini 2.5 Flash")
