@@ -1,41 +1,48 @@
+# app_odyssey_hierarchical.py
 import streamlit as st
 import json
 import os
-from src.rag_pipeline import RAGPipeline
-from src.data_processor import OdysseyDataProcessor
-from src.embedding_retriever import EmbeddingRetriever
+from pathlib import Path
+from src.odyssey_hierarchical_pipeline import OdysseyHierarchicalPipeline
 from dotenv import load_dotenv
 
 load_dotenv()
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-
+# Page config
 st.set_page_config(
-    page_title="Odyssey RAG Chatbot",
-    layout="wide"
+    page_title="Odyssey Hierarchical RAG",
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "pipeline" not in st.session_state:
     st.session_state.pipeline = None
 if "system_ready" not in st.session_state:
     st.session_state.system_ready = False
+if "show_hierarchy" not in st.session_state:
+    st.session_state.show_hierarchy = False
 
+# Sidebar
 with st.sidebar:
-    st.title("Odyssey RAG Chatbot")
+    st.title("Odyssey Hierarchical RAG")
     st.markdown("""
-    **About this chatbot:**
-    - Answers questions about Homer's Odyssey
-    - Uses Gemini 2.5 Flash model
-    - Retrieves context from Project Gutenberg text
-    - Online operation with Google AI API
+    **Features:**
+    - Semantic chunking (not fixed-length)
+    - Hierarchy-aware retrieval
+    - Adaptive question routing
+    - Context-aware responses
     """)
     
     st.divider()
-    st.subheader("API Configuration")
     
-    if GOOGLE_API_KEY:
+    # API Configuration
+    st.subheader("API Configuration")
+    api_key = os.getenv("GOOGLE_API_KEY")
+    
+    if api_key:
         st.success("Google API Key loaded")
     else:
         st.error("Google API Key not found")
@@ -45,96 +52,120 @@ with st.sidebar:
     
     # File paths
     st.subheader("Data Configuration")
-    chunks_path = st.text_input("Chunks JSON path", "data/processed/chunks.json")
-    embeddings_path = st.text_input("Embeddings directory", "data/embeddings/faiss_index")
-    html_path = st.text_input("HTML source path", "data/raw/odyssey.html")
+    html_path = st.text_input("HTML file path", "data/raw/odyssey.html")
+    
+    # Check if file exists
+    if Path(html_path).exists():
+        st.success(f"Found: {html_path}")
+        file_size = Path(html_path).stat().st_size / 1024
+        st.caption(f"File size: {file_size:.1f} KB")
+    else:
+        st.error(f"File not found: {html_path}")
     
     st.divider()
     
-    # Initialize system
-    st.subheader("System Setup")
+    # Retrieval settings
+    st.subheader("Retrieval Settings")
+    k_chunks = st.slider("Max chunks to retrieve", 1, 10, 5, 
+                         help="How many chunks to retrieve for context")
+    similarity_threshold = st.slider("Similarity threshold", 0.0, 1.0, 0.25, 0.05,
+                                    help="Minimum similarity score for chunks")
     
-    if not GOOGLE_API_KEY:
-        st.warning("API key required to initialize system")
+    # Strategy selection
+    retrieval_strategy = st.selectbox(
+        "Retrieval strategy",
+        ["adaptive", "overview", "detail", "character", "structural"],
+        help="Adaptive: Auto-selects based on question type"
+    )
     
-    if st.button("Initialize RAG System", disabled=not GOOGLE_API_KEY):
-        with st.spinner("Setting up the system..."):
-            # Check if data processing is needed
-            data_needs_processing = False
-            
-            if not os.path.exists(chunks_path):
-                data_needs_processing = True
-                st.info("Chunks file not found, will process HTML...")
-            
-            if not os.path.exists(embeddings_path):
-                data_needs_processing = True
-                st.info("Embeddings not found, will create them...")
-            
-            # Process data if needed
-            if data_needs_processing:
-                # Ensure directories exist
-                os.makedirs(os.path.dirname(chunks_path), exist_ok=True)
-                os.makedirs(embeddings_path, exist_ok=True)
-                
-                if os.path.exists(html_path):
-                    st.info("Processing text data...")
-                    try:
-                        processor = OdysseyDataProcessor(html_path)
-                        chunks = processor.process_and_save(chunks_path)
-                        st.success(f"Extracted {len(chunks)} chunks")
-                    except Exception as e:
-                        st.error(f"Error processing HTML: {e}")
-                        st.stop()
-                else:
-                    st.error(f"HTML file not found at: {html_path}")
-                    st.stop()
-                
-                # Create embeddings
-                st.info("Creating embeddings...")
+    st.divider()
+    
+    # Initialize button
+    st.subheader("System Control")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Initialize System", type="primary", disabled=not api_key):
+            with st.spinner("Building hierarchical RAG system..."):
                 try:
-                    with open(chunks_path, 'r', encoding='utf-8') as f:
-                        chunks_data = json.load(f)
+                    st.session_state.pipeline = OdysseyHierarchicalPipeline(
+                        html_path=html_path
+                    )
+                    st.session_state.system_ready = True
+                    st.success("System ready!")
                     
-                    retriever = EmbeddingRetriever()
-                    embeddings = retriever.create_embeddings(chunks_data)
-                    retriever.save_index(embeddings_path, chunks_path)
-                    st.success(f"Created embeddings for {len(chunks_data)} chunks")
+                    # Show stats
+                    pipeline = st.session_state.pipeline
+                    st.info(f"""
+                    **System Stats:**
+                    - Semantic chunks: {len(pipeline.chunks)}
+                    - Hierarchy levels: 1-4
+                    - Processing complete
+                    """)
+                    
                 except Exception as e:
-                    st.error(f"Error creating embeddings: {e}")
-                    st.stop()
+                    st.error(f"Initialization failed: {e}")
+                    st.session_state.system_ready = False
+    
+    with col2:
+        if st.button("Clear Chat"):
+            st.session_state.messages = []
+            st.rerun()
+    
+    # Hierarchy visualization
+    st.divider()
+    st.subheader("Hierarchy Info")
+    
+    if st.button("Show Document Structure"):
+        st.session_state.show_hierarchy = not st.session_state.show_hierarchy
+    
+    if st.session_state.show_hierarchy and st.session_state.pipeline:
+        hierarchy_file = "data/processed/hierarchy.json"
+        if Path(hierarchy_file).exists():
+            with open(hierarchy_file, "r") as f:
+                hierarchy = json.load(f)
             
-            # Initialize pipeline
-            st.info("Initializing RAG pipeline with Gemini...")
-            try:
-                st.session_state.pipeline = RAGPipeline(
-                    chunks_path,
-                    embeddings_path
-                )
-                st.session_state.system_ready = True
-                st.success("System ready !!!")
-            except Exception as e:
-                st.error(f"Error initializing pipeline: {e}")
-                st.session_state.system_ready = False
-            else:
-                st.session_state.system_ready = True
+            st.json(hierarchy, expanded=False)
+            
+            # Show stats
+            nodes = hierarchy.get("nodes", {})
+            if nodes:
+                st.metric("Total nodes", len(nodes))
+                levels = {}
+                for node_id, node in nodes.items():
+                    level = node.get("level", 0)
+                    levels[level] = levels.get(level, 0) + 1
+                
+                for level, count in sorted(levels.items()):
+                    st.caption(f"Level {level} nodes: {count}")
 
 # Main interface
-st.title("The Odyssey RAG Chatbot")
-st.markdown("Ask questions about Homer's Odyssey using Gemini 2.5 Flash")
+st.title("The Odyssey - Hierarchical RAG")
+st.markdown("""
+Ask questions about Homer's Odyssey with intelligent, structure-aware retrieval.
+The system understands book structure, characters, and narrative elements.
+""")
 
-# System status
-col1, col2 = st.columns(2)
+# Status indicators
+col1, col2, col3, col4 = st.columns(4)
 with col1:
-    if GOOGLE_API_KEY:
-        st.success("API Key: Configured")
+    if api_key:
+        st.success("API: Ready")
     else:
-        st.error("API Key: Missing")
-
+        st.error("API: Missing")
 with col2:
     if st.session_state.system_ready:
-        st.success("RAG System: Ready")
+        pipeline = st.session_state.pipeline
+        st.success(f"System: Ready ({len(pipeline.chunks)} chunks)")
     else:
-        st.warning("RAG System: Not initialized")
+        st.warning("System: Not ready")
+with col3:
+    if st.session_state.system_ready:
+        st.info("Source: Odyssey HTML")
+with col4:
+    st.caption(f" Messages: {len(st.session_state.messages)}")
+
+st.divider()
 
 # Chat container
 chat_container = st.container()
@@ -145,19 +176,37 @@ with chat_container:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
             
-            if message["role"] == "assistant" and "sources" in message:
-                if message["sources"]:
-                    with st.expander("View Sources"):
-                        for source in message["sources"]:
-                            st.markdown(f"**{source['chapter']}**")
-                            st.markdown(f"Paragraphs: {source['paragraph_range']}")
-                            st.markdown(f"Similarity: {source['similarity']:.3f}")
-                else:
-                    st.caption("No sources available")
+            # Show metadata for assistant messages
+            if message["role"] == "assistant" and "metadata" in message:
+                metadata = message["metadata"]
+                with st.expander("Retrieval Details"):
+                    cols = st.columns(4)
+                    with cols[0]:
+                        st.metric("Strategy", metadata.get("strategy", "N/A"))
+                    with cols[1]:
+                        st.metric("Type", metadata.get("question_type", "N/A"))
+                    with cols[2]:
+                        st.metric("Chunks", metadata.get("chunks_retrieved", 0))
+                    with cols[3]:
+                        if metadata.get("sources"):
+                            avg_sim = sum(s["similarity"] for s in metadata["sources"]) / len(metadata["sources"])
+                            st.metric("Avg Similarity", f"{avg_sim:.3f}")
+                    
+                    # Sources table
+                    if metadata.get("sources"):
+                        st.subheader("Retrieved Sources")
+                        for i, source in enumerate(metadata["sources"]):
+                            with st.expander(f"Source {i+1}: {source.get('chunk_type', 'chunk')}"):
+                                st.caption(f"Similarity: {source['similarity']:.3f}")
+                                st.caption(f"Level: {source.get('level', 'N/A')}")
+                                st.caption(f"Has parent: {source.get('has_parent', False)}")
+                                st.caption(f"Children: {source.get('child_count', 0)}")
+                                st.text(source['text_preview'])
 
 # Chat input
-if prompt := st.chat_input("Ask a question about The Odyssey", 
+if prompt := st.chat_input("Ask about The Odyssey...", 
                           disabled=not st.session_state.system_ready):
+    
     # Add user message
     st.session_state.messages.append({"role": "user", "content": prompt})
     
@@ -166,61 +215,123 @@ if prompt := st.chat_input("Ask a question about The Odyssey",
         with st.chat_message("user"):
             st.markdown(prompt)
     
-    # Generate response
+   
     with st.chat_message("assistant"):
-        if not GOOGLE_API_KEY:
-            response = "Please configure your Google API key in the .env file."
-            sources = []
-            st.markdown(response)
-        elif not st.session_state.system_ready:
-            response = "Please initialize the system first using the sidebar button."
-            sources = []
-            st.markdown(response)
-        else:
-            with st.spinner("Thinking with Gemini 2.5 Flash..."):
-                try:
-                    pipeline = st.session_state.pipeline
-                    assert pipeline is not None
+     if not api_key:
+         response = "Please configure your Google API key in the .env file."
+         metadata = {}
+         st.markdown(response)
+     elif not st.session_state.system_ready:
+         response = "Please initialize the system first using the sidebar button."
+         metadata = {}
+         st.markdown(response)
+     else:
+         with st.spinner("Retrieving with hierarchy-aware search..."):
+             try:
+                 pipeline = st.session_state.pipeline
 
-                    result = pipeline.answer_question(prompt)
+                 # Handle different strategies
+                 if retrieval_strategy != "adaptive":
+                     # For non-adaptive strategies, we'll analyze the question
+                     # but also adjust parameters
+                     question_type = retrieval_strategy  # Use the strategy as question type
 
-                    response = result["answer"]
-                    sources = result["sources"]
-                    
-                    # Display answer
-                    st.markdown(response)
-                    
-                    # Display sources
-                    if sources:
-                        with st.expander("View Sources"):
-                            for source in sources:
-                                st.markdown(f"**{source['chapter']}**")
-                                st.markdown(f"Paragraphs: {source['paragraph_range']}")
-                                st.markdown(f"Similarity: {source['similarity']:.3f}")
-                    else:
-                        st.caption("No relevant sources found")
-                except Exception as e:
+                     # Get retrieval parameters for this strategy
+                     retrieval_kwargs = pipeline._get_retrieval_kwargs(
+                         question_type, k_chunks, similarity_threshold
+                     )
+
+                     # Get results
+                     retrieved_results = pipeline.retriever.retrieve_with_context(
+                         query=prompt,
+                         **retrieval_kwargs
+                     )
+
+                     # Format context
+                     context = pipeline._format_context_with_hierarchy(retrieved_results, question_type)
+
+                     # Create prompt
+                     final_prompt = pipeline._create_odyssey_prompt(context, prompt, question_type)
+
+                     # Generate answer
+                     answer = pipeline.generator.generate(final_prompt, max_new_tokens=512)
+
+                     # Prepare sources
+                     sources = []
+                     for result in retrieved_results:
+                         source_info = {
+                             "chunk_id": result.chunk_id,
+                             "similarity": round(result.similarity, 3),
+                             "chunk_type": result.metadata.get("chunk_type", "unknown"),
+                             "level": result.metadata.get("level", "unknown"),
+                             "has_parent": result.parent_text is not None,
+                             "child_count": result.child_count,
+                             "text_preview": result.text[:150] + "..." if len(result.text) > 150 else result.text
+                         }
+                         sources.append(source_info)
+
+                     result = {
+                         "answer": answer.strip(),
+                         "sources": sources,
+                         "question_type": question_type,
+                         "strategy": retrieval_strategy,
+                         "chunks_retrieved": len(retrieved_results)
+                     }
+                 else:
+                     # Use the adaptive strategy
+                     result = pipeline.answer_question(
+                         question=prompt,
+                         k=k_chunks,
+                         threshold=similarity_threshold,
+                         strategy="adaptive"
+                     )
+
+                 # Display answer
+                 st.markdown(result["answer"])
+
+                 # Store metadata for display
+                 metadata = {
+                     "strategy": result.get("strategy", "adaptive"),
+                     "question_type": result.get("question_type", "general"),
+                     "chunks_retrieved": result.get("chunks_retrieved", 0),
+                     "sources": result.get("sources", [])
+                 }
+
+             except Exception as e:
                     response = f"Error generating response: {str(e)}"
-                    sources = []
+                    metadata = {}
                     st.error(response)
-    
+                    result = {"answer": response, "sources": []}
+
+
     # Add assistant message to history
     st.session_state.messages.append({
         "role": "assistant", 
-        "content": response,
-        "sources": sources
+        "content": result.get("answer", "No response generated"),
+        "metadata": metadata
     })
 
 # Footer
 st.divider()
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.button("Clear Chat History"):
+footer_cols = st.columns(4)
+with footer_cols[0]:
+    if st.button("Reset System"):
+        st.session_state.pipeline = None
+        st.session_state.system_ready = False
         st.session_state.messages = []
         st.rerun()
+with footer_cols[1]:
+    if st.session_state.pipeline:
+        st.caption(f" {len(st.session_state.pipeline.chunks)} semantic chunks")
+with footer_cols[2]:
+    st.caption("Adaptive hierarchical retrieval")
+with footer_cols[3]:
+    st.caption(" Homer's Odyssey")
 
-with col2:
-    st.caption(f"Messages in chat: {len(st.session_state.messages)}")
+# Example questions
+st.divider()
+st.subheader("Example Questions")
 
-with col3:
-    st.caption(" Gemini 2.5 Flash")
+
+
+st.caption("Try: 'Tell me about the Cyclops', 'What is the role of Athena?', 'Summary of Book 1'")

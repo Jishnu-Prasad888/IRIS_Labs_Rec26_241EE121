@@ -1,0 +1,52 @@
+# config/hierarchical_config.yaml
+retrieval:
+  strategies:
+    hybrid:
+      description: "Combine top-down and bottom-up approaches"
+      top_k: 5
+      threshold: 0.25
+    top_down:
+      description: "Start from high-level sections"
+      top_k: 3
+      threshold: 0.2
+    bottom_up:
+      description: "Start from detailed paragraphs"
+      top_k: 7
+      threshold: 0.3
+  
+  hierarchy:
+    max_depth: 5
+    include_parents: true
+    max_children: 3
+    parent_weight: 0.7  # Weight for parent context similarity
+
+chunking:
+  logical_levels:
+    - name: "document"
+      max_tokens: 2000
+    - name: "chapter"
+      max_tokens: 1000
+    - name: "section"
+      max_tokens: 500
+    - name: "subsection"
+      max_tokens: 300
+    - name: "paragraph"
+      max_tokens: 200
+  
+  semantic_rules:
+    - pattern: "CHAPTER"
+      level: 1
+    - pattern: "\d+\."
+      level: 2
+    - pattern: "\d+\.\d+"
+      level: 3
+    - pattern: "[A-Z]\."
+      level: 4
+
+generation:
+  temperature: 0.2
+  max_tokens: 512
+  system_prompt: |
+    You are a regulatory document assistant. Use the hierarchical context to provide accurate answers.
+    The context shows document structure through indentation.
+    Reference the appropriate level of detail based on the question.
