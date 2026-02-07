@@ -39,7 +39,7 @@ class Source(BaseModel):
     chunk_id: str
     similarity: float
     chunk_type: str
-    level: str
+    level: int
     has_parent: bool
     child_count: int
     text_preview: str
