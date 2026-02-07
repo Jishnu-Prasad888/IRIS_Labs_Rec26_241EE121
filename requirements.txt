@@ -8,7 +8,12 @@ python-dotenv
 pymupdf
 networkx
 plotly
+fastapi
 pyyaml
+uvicorn
+pydantic
+langchain
+chromadb
 dataclasses-json
 
 beautifulsoup4==4.12.3
